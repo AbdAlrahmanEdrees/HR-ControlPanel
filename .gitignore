@@ -3,7 +3,7 @@
 /node_modules
 /build
 /certs
-
+certs
 # Logs
 logs
 *.log
