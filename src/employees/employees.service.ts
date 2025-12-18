@@ -7,14 +7,18 @@ export class EmployeesService {
     constructor(private readonly prisma: PrismaService) { }
 
     async findAll(skip: number, take: number): Promise<Employees[]> {
-        const employees = await this.prisma.employees.findMany({
-            skip: skip,
-            take: take,
-            orderBy: {
-                id: 'asc', // <--- CRITICAL for stable pagination
-            }
-        });
-        return employees;
+        try {
+            const employees = await this.prisma.employees.findMany({
+                skip: skip,
+                take: take,
+                orderBy: {
+                    id: 'asc', // <--- CRITICAL for stable pagination
+                }
+            });
+            return employees;
+        } catch (err) {
+            throw err;
+        }
     }
 
     // async search(search: string, skip: number, give: number) {
@@ -28,10 +32,14 @@ export class EmployeesService {
     // }
 
     async deleteEmployee(id: string): Promise<void> {
-        await this.prisma.employees.delete({
-            where: {
-                id: id
-            }
-        });
+        try {
+            await this.prisma.employees.delete({
+                where: {
+                    id: id
+                }
+            });
+        } catch (err) {
+            throw err;
+        }
     }
 }

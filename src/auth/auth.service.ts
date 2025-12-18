@@ -10,6 +10,7 @@ import { EmailService } from 'src/auth/email/email.service';
 import { ApprState, UserRole } from 'generated/prisma/enums';
 import { VerifingDto } from './dto/verification.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { JwtPayload } from './types/jwtPayload.type';
 // env.config();
 @Injectable()
 export class AuthService {
@@ -65,9 +66,15 @@ export class AuthService {
     async signinLocal(dto: SignInDto) {
         // 1. Find User (Cleaner lookup logic)
         // If email is provided, search by email. If not, search by phone.
-        const user = await this.prisma.users.findUnique({
-            where: dto.email ? { email: dto.email } : { phone: dto.phone }
-        });
+        let user;
+        try {
+
+            user = await this.prisma.users.findUnique({
+                where: dto.email ? { email: dto.email } : { phone: dto.phone }
+            });
+        } catch (err) {
+            throw err;
+        }
 
         // 2. Validate User Existence
         if (!user) {
@@ -99,27 +106,37 @@ export class AuthService {
     }
 
     async logout(userId: string) {
-        await this.prisma.users.updateMany({
-            where: {
-                id: userId,
-                hashedRefreshToken: {
-                    not: null
+        try {
+
+            await this.prisma.users.updateMany({
+                where: {
+                    id: userId,
+                    hashedRefreshToken: {
+                        not: null
+                    }
+                },
+                data: {
+                    hashedRefreshToken: null
                 }
-            },
-            data: {
-                hashedRefreshToken: null
-            }
-        })
+            });
+        } catch (err) {
+            throw err;
+        }
 
     }
 
     async resetPassword(dto: ResetPasswordDto) {
-        const user = await this.prisma.users.findUnique({
-            where: {
-                id: dto.userId,
-                email: dto.email
-            }
-        });
+        let user;
+        try {
+            user = await this.prisma.users.findUnique({
+                where: {
+                    id: dto.userId,
+                    email: dto.email
+                }
+            });
+        } catch (err) {
+            throw err;
+        }
         if (!user) {
             throw new ForbiddenException();
         }
@@ -134,19 +151,25 @@ export class AuthService {
             throw new ForbiddenException(errMsg);
         }
         const hashedPassword = await this.hashData(dto.newPassword);
-        await this.prisma.users.update({
-            where: {
-                id: dto.userId
-            },
-            data: {
-                hashedPassword: hashedPassword
-            }
-        });
+        try {
+            await this.prisma.users.update({
+                where: {
+                    id: dto.userId
+                },
+                data: {
+                    hashedPassword: hashedPassword
+                }
+            });
+        } catch (err) { throw err; }
 
     }
 
     async verifyAccount(dto: VerifingDto): Promise<Tokens> {
-        const user = await this.prisma.users.findUnique({ where: { id: dto.userId } });
+        let user;
+        try {
+            user = await this.prisma.users.findUnique({ where: { id: dto.userId } });
+        }
+        catch (err) { throw err; }
 
         if (!user) {
             throw new ForbiddenException();
@@ -162,7 +185,12 @@ export class AuthService {
             throw new ForbiddenException(errMsg);
         }
 
-        await this.prisma.users.update({ where: { id: dto.userId }, data: { approvalState: 'VERIFIED' } });
+        try {
+            await this.prisma.users.update({ where: { id: dto.userId }, data: { approvalState: 'VERIFIED' } });
+        }
+        catch (err) {
+            throw err;
+        }
 
         const tokens = await this.getTokens(user.id, user.email, user.role);
         await this.updateRtHash(user.id, tokens.refresh_token);
@@ -171,11 +199,17 @@ export class AuthService {
 
 
     async refreshTokens(userId: string, rt: string): Promise<Tokens> {
-        const user = await this.prisma.users.findUnique({
-            where: {
-                id: userId
-            }
-        });
+        let user;
+        try {
+            user = await this.prisma.users.findUnique({
+                where: {
+                    id: userId
+                }
+            });
+        }
+        catch (err) {
+            throw err;
+        }
         if (!user?.hashedRefreshToken) {
             const errMsg = "Access denied. Please log in again.";
             throw new ForbiddenException(errMsg);
@@ -195,11 +229,16 @@ export class AuthService {
     }
 
     async sendVerificationCode(userId: string) {
-        const user = await this.prisma.users.findUnique({
-            where: {
-                id: userId
-            }
-        });
+        let user;
+        try {
+            user = await this.prisma.users.findUnique({
+                where: {
+                    id: userId
+                }
+            });
+        } catch (err) {
+            throw err;
+        }
         if (!user) {
             throw new ForbiddenException();
         }
@@ -219,15 +258,19 @@ export class AuthService {
 
         const code = Math.floor(10000 + Math.random() * 90000);
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+        try {
 
-        await this.emailService.sendVerificationCode(user.email, code);
-        await this.prisma.users.update({
-            where: { id: user.id },
-            data: {
-                verificationCode: code,
-                verificationCode_ExpiresAt: expiresAt
-            }
-        });
+            await this.emailService.sendVerificationCode(user.email, code);
+            await this.prisma.users.update({
+                where: { id: user.id },
+                data: {
+                    verificationCode: code,
+                    verificationCode_ExpiresAt: expiresAt
+                }
+            });
+        } catch (err) {
+            throw err;
+        }
     }
 
 
@@ -244,10 +287,10 @@ export class AuthService {
     async getTokens(userId: string, email: string, role: UserRole) {
         // you can use whatever data you want.
         // But it should be public data, not something like password.
-        const payload = {
+        const payload: JwtPayload = {
             sub: userId,
             email: email,
-            rolee: role
+            role: role
         };
 
         const accessToken = await this.jwtService.signAsync(payload, {
@@ -268,11 +311,15 @@ export class AuthService {
 
     async updateRtHash(userId: string, refreshToken: string) {
         const rtHashed = await this.hashData(refreshToken);
-        await this.prisma.users.update({
-            where: { id: userId }, data: {
-                hashedRefreshToken: rtHashed,
-            }
-        });
+        try {
+            await this.prisma.users.update({
+                where: { id: userId }, data: {
+                    hashedRefreshToken: rtHashed,
+                }
+            });
+        } catch (err) {
+            throw err;
+        }
 
     }
 

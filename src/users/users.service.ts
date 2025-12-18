@@ -9,33 +9,45 @@ export class UsersService {
     constructor(private readonly prisma: PrismaService, private readonly authService: AuthService) { }
 
     async findAll(): Promise<Users[]> {
-        const users = await this.prisma.users.findMany();
-        return users;
+        try {
+            const users = await this.prisma.users.findMany();
+            return users;
+        } catch (err) {
+            throw err;
+        }
     }
 
     async search(search: string): Promise<Users[]> {
-        const users = this.prisma.users.findMany({
-            where: {
-                OR: [
-                    // contains: term, mode: 'insensitive' makes it case-insensitive (Postgres)
-                    { id: { contains: search, mode: 'insensitive' } },
-                    { name: { contains: search, mode: 'insensitive' } },
-                    { email: { contains: search, mode: 'insensitive' } },
-                    { phone: { contains: search, mode: 'insensitive' } },
-                ]
-            }
-        });
+        try {
+            const users = await this.prisma.users.findMany({
+                where: {
+                    OR: [
+                        // contains: term, mode: 'insensitive' makes it case-insensitive (Postgres)
+                        { id: { contains: search, mode: 'insensitive' } },
+                        { name: { contains: search, mode: 'insensitive' } },
+                        { email: { contains: search, mode: 'insensitive' } },
+                        { phone: { contains: search, mode: 'insensitive' } },
+                    ]
+                }
+            });
 
-        return users;
+            return users;
+        } catch (err) {
+            throw err;
+        }
     }
 
 
     async deleteUser(id: string) {
-        await this.prisma.users.delete({
-            where: {
-                id: id
-            }
-        });
+        try {
+            await this.prisma.users.delete({
+                where: {
+                    id: id
+                }
+            });
+        } catch (err) {
+            throw err;
+        }
     }
 
     async addUser(user: CreateUserDto): Promise<string> {
@@ -57,7 +69,7 @@ export class UsersService {
         } catch (error) {
             // Optional: specific error handling
             if (error.code === 'P2002') {
-                 throw new ConflictException('Email or Phone already taken');
+                throw new ConflictException('Email or Phone already taken');
             }
             throw error;
         }

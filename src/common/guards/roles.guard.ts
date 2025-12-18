@@ -29,6 +29,9 @@ export class RolesGuard implements CanActivate {
             .getRequest<{ user: { role: UserRole } }>();
 
         if (!user || !user.role) {
+            console.log(user);
+            console.log("===");
+            console.log(user.role);
             throw new UnauthorizedException('Role information missing');
         }
 
