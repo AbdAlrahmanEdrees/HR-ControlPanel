@@ -1,0 +1,171 @@
+generator client {
+  provider   = "prisma-client"
+  output     = "../generated/prisma"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Users {
+  id                         String    @id @default(uuid())
+  name                       String
+  role                       UserRole  @default(ADMIN)
+  approvalState              ApprState @default(NOT_VERIFIED)
+  verificationCode           Int?
+  verificationCode_ExpiresAt DateTime?
+  email                      String    @unique @db.VarChar(255)
+  phone                      String?   @unique @db.VarChar(50)
+  hashedPassword             String
+  hashedRefreshToken         String?
+  hashedAccessToken          String?
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
+  // admin                      Admins?
+  // employee                   Employees?
+}
+
+// model Admins {
+//   id               String @id @unique
+//   permissionsLevel Int    @default(1)
+//   user             Users  @relation(fields: [id], references: [id])
+// }
+
+model Employees {
+  id                       String             @id @default(uuid())
+  attrition                AttritionType
+  age                      Int
+  gender                   String
+  maritalStatus            MaritalStatusType
+  distanceFromHome         Int
+  monthlyIncome            Int
+  percentSalaryHike        Int
+  jobLevel                 Int // 1 -> 5
+  jobRole                  JobRoleType
+  businessTravel           BusinessTravelType
+  department               DepartmentType
+  education                EducationLevel
+  educationField           EducationFieldType
+  numCompaniesWorked       Int
+  totalWorkingYears        Int
+  trainingTimesLastYear    Int
+  trainingHoursLastYear    Int
+  trainingHoursLast6Months Int
+  trainingGapScore         Int
+  yearsAtCompany           Int
+  yearsInCurrentRole       Int
+  yearsSinceLastPromotion  Int
+  yearsWithCurrManager     Int
+  environmentSatisfaction  SatisfactionRating
+  jobInvolvement           SatisfactionRating
+  jobSatisfaction          SatisfactionRating
+  performanceRating        PerformanceRating
+  relationshipSatisfaction SatisfactionRating
+  workLifeBalance          SatisfactionRating
+  overTime                 OvertimeType
+  absenceDaysLastMonth     Int
+  absenceDaysLast3Months   Int
+  absenceRatio             Float
+  lateArrivalsLastMonth    Int
+  overtimeHoursLastMonth   Float
+  workloadPressureIndex    Int
+  engagementScore          Int
+  managerFeedbackScore     Int
+  roleStabilityRatio       Float
+  attritionRiskClass       AttritionRiskClass
+  // hourlyRate               Int
+  // dailyRate                Int
+  // monthlyRate              Int
+  // stockOptionLevel         Int
+  // promotionStagnationRatio Float
+
+  // user                     Users              @relation(fields: [id], references: [id])
+}
+
+enum UserRole {
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum ApprState {
+  VERIFIED
+  NOT_VERIFIED
+}
+
+enum AttritionType {
+  YES @map("Yes")
+  NO  @map("No")
+}
+
+enum OvertimeType {
+  YES @map("Yes")
+  NO  @map("No")
+}
+
+enum BusinessTravelType {
+  NON_TRAVEL        @map("Non-Travel")
+  TRAVEL_RARELY     @map("Travel_Rarely")
+  TRAVEL_FREQUENTLY @map("Travel_Frequently")
+}
+
+enum DepartmentType {
+  RESEARCH_DEVELOPMENT @map("Research & Development")
+  SALES                @map("Sales")
+  HUMAN_RESOURCES      @map("Human Resources")
+}
+
+enum EducationLevel {
+  BELOW_COLLEGE @map("Below College")
+  COLLEGE       @map("College")
+  BACHELOR      @map("Bachelor")
+  MASTER        @map("Master")
+  DOCTOR        @map("Doctor")
+}
+
+enum EducationFieldType {
+  LIFE_SCIENCES    @map("Life Sciences")
+  MEDICAL          @map("Medical")
+  MARKETING        @map("Marketing")
+  TECHNICAL_DEGREE @map("Technical Degree")
+  HUMAN_RESOURCES  @map("Human Resources")
+  OTHER            @map("Other")
+}
+
+enum JobRoleType {
+  SALES_EXECUTIVE           @map("Sales Executive")
+  RESEARCH_SCIENTIST        @map("Research Scientist")
+  LABORATORY_TECHNICIAN     @map("Laboratory Technician")
+  MANUFACTURING_DIRECTOR    @map("Manufacturing Director")
+  HEALTHCARE_REPRESENTATIVE @map("Healthcare Representative")
+  MANAGER                   @map("Manager")
+  SALES_REPRESENTATIVE      @map("Sales Representative")
+  RESEARCH_DIRECTOR         @map("Research Director")
+  HUMAN_RESOURCES           @map("Human Resources")
+}
+
+enum MaritalStatusType {
+  SINGLE   @map("Single")
+  MARRIED  @map("Married")
+  DIVORCED @map("Divorced")
+}
+
+enum SatisfactionRating {
+  LOW       @map("Low")
+  MEDIUM    @map("Medium")
+  HIGH      @map("High")
+  VERY_HIGH @map("Very High")
+}
+
+enum PerformanceRating {
+  LOW         @map("Low")
+  GOOD        @map("Good")
+  EXCELLENT   @map("Excellent")
+  OUTSTANDING @map("Outstanding")
+}
+
+enum AttritionRiskClass {
+  LOW    @map("Low")
+  MEDIUM @map("Medium")
+  HIGH   @map("High")
+}
