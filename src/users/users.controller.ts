@@ -17,9 +17,10 @@ import { UserRole } from 'generated/prisma/client';
 import { CreateUserDto } from './dto/create.user.dto';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
+import { AtAuthorizationHeader } from 'src/common/decorators/at-authorization.decorator';
 
 @ApiTags('Users') // Groups this under "Users" in Swagger UI
-@ApiBearerAuth() // <--- Adds the "Authorize" lock icon to these endpoints
+@AtAuthorizationHeader()
 @ApiForbiddenResponse({ 
     description: 'Forbidden. Requires SUPER_ADMIN role.' // <--- Documents the 403 error for the whole controller
 })

@@ -40,7 +40,7 @@ export class AuthController {
   @Post("local/signin")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: "Sign in using email or phone",
+    summary: "Sign in using email or phone to get tokens",
     description: "Provide either **email** or **phone** to login."
   })
   @ApiBody({ type: SignInDto })
@@ -94,6 +94,7 @@ export class AuthController {
   @MyPublic()
   @UseGuards(AuthGuard('jwt-refresh'))
   @Post('/refresh')
+  @ApiOperation({summary:"Get fresh new tokens using the refresh_token",description:"even the refresh token will be refreshed"})
   @ApiBody({})
   @ApiHeader({
     name: 'Authorization',
@@ -113,6 +114,7 @@ export class AuthController {
   @Post('verify')
   @HttpCode(HttpStatus.OK)
   @ApiBody({ type: VerifingDto })
+  @ApiResponse({status:200, description:"verified successfully"})
   @ApiResponse({ status: 403, description: "verification code wrong or expired" })
   verifyAccount(@Body() dto: VerifingDto): Promise<Tokens> {
     return this.authService.verifyAccount(dto);

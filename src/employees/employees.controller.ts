@@ -1,11 +1,15 @@
-import { Controller, Get, Query, DefaultValuePipe, ParseIntPipe, HttpStatus, Delete, Param, UseGuards, HttpCode, ParseUUIDPipe } from '@nestjs/common';
-import { ApiTags, ApiQuery, ApiResponse, ApiOperation, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { Controller, Get, Query, DefaultValuePipe, ParseIntPipe, HttpStatus, Delete, Param, UseGuards, HttpCode, ParseUUIDPipe, Put, Body, Post } from '@nestjs/common';
+import { ApiTags, ApiQuery, ApiResponse, ApiOperation, ApiBearerAuth, ApiParam, ApiBody, ApiOkResponse, ApiBadRequestResponse, ApiUnauthorizedResponse, ApiForbiddenResponse, ApiNotFoundResponse, ApiCreatedResponse } from '@nestjs/swagger';
 import { EmployeesService } from './employees.service';
 import { Employees, UserRole } from 'generated/prisma/client';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
+import { AtAuthorizationHeader } from 'src/common/decorators/at-authorization.decorator';
+import { UpdateEmployeeDto } from './dto/update.employee.dto';
+import { CreateEmployeeDto } from './dto/create.employee.dto';
 
 @ApiTags('Employees')
+@AtAuthorizationHeader()
 @Controller('employees')
 export class EmployeesController {
     constructor(private readonly employeesService: EmployeesService) { }
@@ -57,7 +61,6 @@ export class EmployeesController {
     @Roles(UserRole.SUPER_ADMIN)
     @Delete(':id')
     @HttpCode(HttpStatus.NO_CONTENT) // Standard for void returns
-    @ApiBearerAuth() // Adds the lock icon
     @ApiOperation({ summary: 'Delete an employee', description: 'Restricted to SUPER_ADMIN.' })
     @ApiParam({ name: 'id', description: 'UUID of the employee' })
     @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Employee deleted successfully.' })
@@ -67,4 +70,109 @@ export class EmployeesController {
         // ParseUUIDPipe: to prevent database crashes on invalid IDs.
         return this.employeesService.deleteEmployee(id);
     }
+
+    @UseGuards(RolesGuard)
+    @Roles(UserRole.SUPER_ADMIN)
+    @Put()
+    @ApiOperation({
+        summary: 'Update an employee',
+        description: 'Updates an existing employee. Restricted to SUPER_ADMIN users only.',
+    })
+    @ApiBearerAuth()
+    @ApiBody({
+        type: UpdateEmployeeDto,
+        required: true,
+        description: 'Complete employee data including a valid employee id',
+    })
+    @ApiOkResponse({
+        description: 'Employee updated successfully',
+        type: CreateEmployeeDto,
+    })
+    @ApiBadRequestResponse({
+        description: 'Invalid payload or validation error',
+    })
+    @ApiUnauthorizedResponse({
+        description: 'Missing or invalid authentication token',
+    })
+    @ApiForbiddenResponse({
+        description: 'User is not SUPER_ADMIN',
+    })
+    @ApiNotFoundResponse({
+        description: 'Employee with the given id was not found',
+    })
+    async updateEmployee(
+        @Body() updatedEmp: UpdateEmployeeDto,
+    ) {
+        return this.employeesService.updateEmployee(updatedEmp);
+    }
+
+    @UseGuards(RolesGuard)
+    @Roles(UserRole.SUPER_ADMIN)
+    @Post()
+    @ApiOperation({
+        summary: 'Create an employee',
+        description: 'Creates a new employee. Restricted to SUPER_ADMIN users only.',
+    })
+    @ApiBearerAuth()
+    @ApiBody({
+        type: CreateEmployeeDto,
+        required: true,
+        description: 'New employee data without id',
+    })
+    @ApiCreatedResponse({
+        description: 'Employee created successfully',
+    })
+    @ApiBadRequestResponse({
+        description: 'Invalid payload or validation error',
+    })
+    @ApiUnauthorizedResponse({
+        description: 'Missing or invalid authentication token',
+    })
+    @ApiForbiddenResponse({
+        description: 'User is not SUPER_ADMIN',
+    })
+    async createEmployee(
+        @Body() newEmp: CreateEmployeeDto,
+    ) {
+        return this.employeesService.createEmployee(newEmp);
+    }
+
+    //#########################################################################
+    //########################## Custom Search ################################
+    //#########################################################################
+    @Get('best-performance')
+    @ApiOperation({
+        summary: 'Get best performance employees (Paginated)',
+        description:
+            'Retrieves employees with the highest performance rating, ordered from best to worst. Supports pagination.',
+    })
+    @ApiQuery({
+        name: 'skip',
+        required: false,
+        type: Number,
+        description: 'Number of records to skip (offset). Defaults to 0.',
+        example: 0,
+    })
+    @ApiQuery({
+        name: 'take',
+        required: false,
+        type: Number,
+        description: 'Number of records to retrieve (limit). Defaults to 10. Max is 100.',
+        example: 10,
+    })
+    @ApiOkResponse({
+        description: 'Best performance employees retrieved successfully.',
+    })
+    @ApiBadRequestResponse({
+        description: 'Invalid pagination parameters.',
+    })
+    async getBestPerformanceEmployees(
+        @Query('skip', new DefaultValuePipe(0), ParseIntPipe) skip = 0,
+        @Query('take', new DefaultValuePipe(10), ParseIntPipe) take = 10,
+    ) {
+        if (take > 100) take = 100;
+
+        return this.employeesService.getBestPerformanceEmployees(skip, take);
+    }
+
 }
