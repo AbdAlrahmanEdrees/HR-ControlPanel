@@ -86,6 +86,17 @@ model Employees {
 enum UserRole {
   ADMIN
   SUPER_ADMIN
+  // see the comment in the users.service: addUser function
+
+  //   Because UserRole has no @map(),
+  // Prisma stores exactly what the enum key is.
+
+  // But I should still use UserRole.SUPER_ADMIN in code.
+
+  // Because for e.g.: EducationFieldType has @map(),
+  // Prisma queries must always use
+  // EducationFieldType.MARKETING,
+  // and strings will never work.
 }
 
 enum ApprState {
@@ -129,7 +140,27 @@ enum EducationFieldType {
   MARKETING        @map("Marketing")
   TECHNICAL_DEGREE @map("Technical Degree")
   HUMAN_RESOURCES  @map("Human Resources")
-  OTHER            @map("Other")
+  OTHER            @map("Other")         
+  /*
+           ** Very Important Note: **
+  - When you use @map(), this code will not work:
+        this.prisma.employees.findMany({
+          where:{
+            educationField:EducationFieldType.HUMAN_RESOURCES
+          }
+
+  - This one also will not work:
+        this.prisma.employees.findMany({
+          where:{
+            educationField:"Human Resources"
+          }
+
+  - Only this one will work:
+        this.prisma.employees.findMany({
+            where:{
+              educationField:"HUMAN_RESOURCES" as any
+            }
+  */
 }
 
 enum JobRoleType {

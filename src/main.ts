@@ -11,11 +11,15 @@ dotenv.config();
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Enable Validation Globally
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
-      transform: true,
-      forbidNonWhitelisted: true,
+      whitelist: true, // Strips properties that are not in the DTO
+      transform: true, // Automatically transforms payloads to DTO instances
+      forbidNonWhitelisted: true, // Throws error if extra properties are sent
+      transformOptions: {
+        enableImplicitConversion: true, // Helps with converting strings to numbers in Query params
+      },
     }),
   );
 

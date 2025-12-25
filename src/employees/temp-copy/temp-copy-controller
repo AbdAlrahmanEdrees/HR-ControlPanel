@@ -1,0 +1,295 @@
+// import { Controller, Get, Query, DefaultValuePipe, ParseIntPipe, HttpStatus, Delete, Param, UseGuards, HttpCode, ParseUUIDPipe, Put, Body, Post } from '@nestjs/common';
+// import { ApiTags, ApiQuery, ApiResponse, ApiOperation, ApiBearerAuth, ApiParam, ApiBody, ApiOkResponse, ApiBadRequestResponse, ApiUnauthorizedResponse, ApiForbiddenResponse, ApiNotFoundResponse, ApiCreatedResponse } from '@nestjs/swagger';
+// import { EmployeesService } from './employees.service';
+// import { Employees, UserRole } from 'generated/prisma/client';
+// import { RolesGuard } from 'src/common/guards/roles.guard';
+// import { Roles } from 'src/common/decorators/roles.decorator';
+// import { AtAuthorizationHeader } from 'src/common/decorators/at-authorization.decorator';
+// import { UpdateEmployeeDto } from './dto/update.employee.dto';
+// import { CreateEmployeeDto } from './dto/create.employee.dto';
+
+// @ApiTags('Employees')
+// @AtAuthorizationHeader()
+// @Controller('employees')
+// export class EmployeesController {
+//     constructor(private readonly employeesService: EmployeesService) { }
+
+//     @Get()
+//     @ApiOperation({
+//         summary: 'Get all employees (Paginated)',
+//         description: 'Retrieves a list of employees using pagination. Max limit per request is 100.'
+//     })
+//     // @ApiQuery({ name: 'search', required: false })
+//     @ApiQuery({
+//         name: 'skip',
+//         required: false,
+//         type: Number,
+//         description: 'Number of records to skip (offset). Defaults to 0.',
+//         example: 0
+//     })
+//     @ApiQuery({
+//         name: 'take',
+//         required: false,
+//         type: Number,
+//         description: 'Number of records to retrieve (limit). Defaults to 10. Max is 100.',
+//         example: 10
+//     }) // 'take' (standard)
+//     @ApiResponse({
+//         status: HttpStatus.OK,
+//         description: 'The list of employees has been successfully retrieved.',
+//     })
+//     @ApiResponse({
+//         status: HttpStatus.INTERNAL_SERVER_ERROR,
+//         description: 'Internal server error.'
+//     })
+//     async findAll(
+//         // @Query('search') search?: string,
+//         // DefaultValuePipe ensures it has a value if missing
+//         // ParseIntPipe ensures "10" (string) becomes 10 (number)
+//         @Query('skip', new DefaultValuePipe(0), ParseIntPipe) skip: number = 0,
+//         @Query('take', new DefaultValuePipe(10), ParseIntPipe) take: number = 10,
+//     ): Promise<Employees[]> {
+//         if (take > 100) take = 100; // Safety limit
+
+//         // if (search) {
+//         //     return this.employeesService.search(search, skip, take);
+//         // }
+//         return this.employeesService.findAll(skip, take);
+//     }
+
+//     @UseGuards(RolesGuard)
+//     @Roles(UserRole.SUPER_ADMIN)
+//     @Delete(':id')
+//     @HttpCode(HttpStatus.NO_CONTENT) // Standard for void returns
+//     @ApiOperation({ summary: 'Delete an employee', description: 'Restricted to SUPER_ADMIN.' })
+//     @ApiParam({ name: 'id', description: 'UUID of the employee' })
+//     @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Employee deleted successfully.' })
+//     @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Requires SUPER_ADMIN role.' })
+//     @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Employee not found.' })
+//     async deleteEmployee(@Param('id', ParseUUIDPipe) id: string) {
+//         // ParseUUIDPipe: to prevent database crashes on invalid IDs.
+//         return this.employeesService.deleteEmployee(id);
+//     }
+
+//     @UseGuards(RolesGuard)
+//     @Roles(UserRole.SUPER_ADMIN)
+//     @Put()
+//     @ApiOperation({
+//         summary: 'Update an employee',
+//         description: 'Updates an existing employee. Restricted to SUPER_ADMIN users only.',
+//     })
+//     @ApiBearerAuth()
+//     @ApiBody({
+//         type: UpdateEmployeeDto,
+//         required: true,
+//         description: 'Complete employee data including a valid employee id',
+//     })
+//     @ApiOkResponse({
+//         description: 'Employee updated successfully',
+//         type: CreateEmployeeDto,
+//     })
+//     @ApiBadRequestResponse({
+//         description: 'Invalid payload or validation error',
+//     })
+//     @ApiUnauthorizedResponse({
+//         description: 'Missing or invalid authentication token',
+//     })
+//     @ApiForbiddenResponse({
+//         description: 'User is not SUPER_ADMIN',
+//     })
+//     @ApiNotFoundResponse({
+//         description: 'Employee with the given id was not found',
+//     })
+//     async updateEmployee(
+//         @Body() updatedEmp: UpdateEmployeeDto,
+//     ) {
+//         return this.employeesService.updateEmployee(updatedEmp);
+//     }
+
+//     @UseGuards(RolesGuard)
+//     @Roles(UserRole.SUPER_ADMIN)
+//     @Post()
+//     @ApiOperation({
+//         summary: 'Create an employee',
+//         description: 'Creates a new employee. Restricted to SUPER_ADMIN users only.',
+//     })
+//     @ApiBearerAuth()
+//     @ApiBody({
+//         type: CreateEmployeeDto,
+//         required: true,
+//         description: 'New employee data without id',
+//     })
+//     @ApiCreatedResponse({
+//         description: 'Employee created successfully',
+//     })
+//     @ApiBadRequestResponse({
+//         description: 'Invalid payload or validation error',
+//     })
+//     @ApiUnauthorizedResponse({
+//         description: 'Missing or invalid authentication token',
+//     })
+//     @ApiForbiddenResponse({
+//         description: 'User is not SUPER_ADMIN',
+//     })
+//     async createEmployee(
+//         @Body() newEmp: CreateEmployeeDto,
+//     ) {
+//         return this.employeesService.createEmployee(newEmp);
+//     }
+
+//     //#############################################################################################################################
+//     //#################################################### Custom Search ##########################################################
+//     //#############################################################################################################################
+
+//     //################################################################
+//     //################### Best & Worst performance ###################
+//     //################################################################
+//     @Get('best-performance')
+//     @ApiOperation({
+//         summary: 'Get best performance employees (Paginated)',
+//         description:
+//             'Retrieves employees with the highest performance rating, ordered from best to worst. Supports pagination.',
+//     })
+//     @ApiQuery({
+//         name: 'skip',
+//         required: false,
+//         type: Number,
+//         description: 'Number of records to skip (offset). Defaults to 0.',
+//         example: 0,
+//     })
+//     @ApiQuery({
+//         name: 'take',
+//         required: false,
+//         type: Number,
+//         description: 'Number of records to retrieve (limit). Defaults to 10. Max is 100.',
+//         example: 10,
+//     })
+//     @ApiOkResponse({
+//         description: 'Best performance employees retrieved successfully.',
+//     })
+//     @ApiBadRequestResponse({
+//         description: 'Invalid pagination parameters.',
+//     })
+//     async getBestPerformanceEmployees(
+//         @Query('skip', new DefaultValuePipe(0), ParseIntPipe) skip = 0,
+//         @Query('take', new DefaultValuePipe(10), ParseIntPipe) take = 10,
+//     ) {
+//         if (take > 100) take = 100;
+
+//         return this.employeesService.getBestPerformanceEmployees(skip, take);
+//     }
+
+
+
+//     @Get('worst-performance')
+//     @ApiOperation({
+//         summary: 'Get worst performance employees (Paginated)',
+//         description:
+//             'Retrieves employees with the lowest performance rating, ordered from worst to better. Supports pagination.',
+//     })
+//     @ApiQuery({
+//         name: 'skip',
+//         required: false,
+//         type: Number,
+//         description: 'Number of records to skip (offset). Defaults to 0.',
+//         example: 0,
+//     })
+//     @ApiQuery({
+//         name: 'take',
+//         required: false,
+//         type: Number,
+//         description: 'Number of records to retrieve (limit). Defaults to 10. Max is 100.',
+//         example: 10,
+//     })
+//     @ApiOkResponse({
+//         description: 'Worst performance employees retrieved successfully.',
+//     })
+//     @ApiBadRequestResponse({
+//         description: 'Invalid pagination parameters.',
+//     })
+//     async getWorstPerformanceEmployees(
+//         @Query('skip', new DefaultValuePipe(0), ParseIntPipe) skip = 0,
+//         @Query('take', new DefaultValuePipe(10), ParseIntPipe) take = 10,
+//     ) {
+//         if (take > 100) take = 100;
+
+//         return this.employeesService.getWorstPerformanceEmployees(skip, take);
+//     }
+
+
+//     //################################################################
+//     //################# eldest & most fresh employees ################
+//     //################################################################
+//     @Get('eldest')
+//     @ApiOperation({
+//         summary: 'Get eldest employees in the company (by years at company)',
+//         description:
+//             'Retrieves employees who have been at the company the longest. Supports pagination.',
+//     })
+//     @ApiQuery({
+//         name: 'skip',
+//         required: false,
+//         type: Number,
+//         description: 'Number of records to skip (offset). Defaults to 0.',
+//         example: 0,
+//     })
+//     @ApiQuery({
+//         name: 'take',
+//         required: false,
+//         type: Number,
+//         description: 'Number of records to retrieve (limit). Defaults to 10. Max is 100.',
+//         example: 10,
+//     })
+//     @ApiOkResponse({
+//         description: 'Eldest employees retrieved successfully.',
+//     })
+//     @ApiBadRequestResponse({
+//         description: 'Invalid pagination parameters.',
+//     })
+//     async getEldestEmployees(
+//         @Query('skip', new DefaultValuePipe(0), ParseIntPipe) skip = 0,
+//         @Query('take', new DefaultValuePipe(10), ParseIntPipe) take = 10,
+//     ) {
+//         if (take > 100) take = 100;
+
+//         return this.employeesService.getEldestEmployees(skip, take);
+//     }
+
+
+//     @Get('freshest')
+//     @ApiOperation({
+//         summary: 'Get most fresh employees in the company (by years at company)',
+//         description:
+//             'Retrieves employees who have been at the company the shortest time. Supports pagination.',
+//     })
+//     @ApiQuery({
+//         name: 'skip',
+//         required: false,
+//         type: Number,
+//         description: 'Number of records to skip (offset). Defaults to 0.',
+//         example: 0,
+//     })
+//     @ApiQuery({
+//         name: 'take',
+//         required: false,
+//         type: Number,
+//         description: 'Number of records to retrieve (limit). Defaults to 10. Max is 100.',
+//         example: 10,
+//     })
+//     @ApiOkResponse({
+//         description: 'Freshest employees retrieved successfully.',
+//     })
+//     @ApiBadRequestResponse({
+//         description: 'Invalid pagination parameters.',
+//     })
+//     async getFreshestEmployees(
+//         @Query('skip', new DefaultValuePipe(0), ParseIntPipe) skip = 0,
+//         @Query('take', new DefaultValuePipe(10), ParseIntPipe) take = 10,
+//     ) {
+//         if (take > 100) take = 100;
+
+//         return this.employeesService.getFreshestEmployees(skip, take);
+//     }
+
+
+// }

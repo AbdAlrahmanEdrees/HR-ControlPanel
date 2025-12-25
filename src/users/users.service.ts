@@ -61,7 +61,10 @@ export class UsersService {
                     email: user.email,
                     hashedPassword: passHash,
                     phone: user.phone,
-                    role: user.role
+                    role: user.role // This is unsafe, always better to use objects in the prisma client: for example:
+                    //role: 'SUPER_ADMIN' <- will work, because it is stored also like this in the db (there is no @map in the schema.prisma) BUT:
+                    //role: UserRole.SUPER_ADMIN <- is better, and safe.
+                    // If you still don't know what I mean, what you are doing now is that you are using a string (see CreateUserDto), not the object.
                 }
             });
 
