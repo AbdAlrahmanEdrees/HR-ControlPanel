@@ -13,7 +13,7 @@ The API is fully documented using **Swagger (OpenAPI)**.
 
 ### Interactive UI
 When the server is running, you can access the interactive documentation to test endpoints directly:
-👉 **[http://localhost:3000/api](http://localhost:3000/api)**
+👉 **[http://localhost:3000/api/docs](http://localhost:3000/api/docs)**
 
 ### Static Specification
 A `swagger-spec.json` file is also available in the root directory for importing into tools like **Postman** or **Insomnia**.
