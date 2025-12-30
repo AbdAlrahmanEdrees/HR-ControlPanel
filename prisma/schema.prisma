@@ -155,7 +155,7 @@ enum EducationFieldType {
             educationField:"Human Resources"
           }
 
-  - Only this one will work:
+  - Only this one worked:
         this.prisma.employees.findMany({
             where:{
               educationField:"HUMAN_RESOURCES" as any

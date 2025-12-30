@@ -4,6 +4,7 @@ import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import * as fs from 'fs';
 import * as dotenv from 'dotenv';
 import { ValidationPipe } from "@nestjs/common";
+import { METHODS } from "http";
 
 dotenv.config();
 //Now process.env is available everywhere (Services, Controllers, Modules)
@@ -33,6 +34,17 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
 
   fs.writeFileSync('swagger-spec.json', JSON.stringify(document));
+
+  app.enableCors({
+    origin: [
+      'http://localhost:5173',
+      'https://hrdashboardai.netlify.app',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: '*',
+    credentials: true,
+  });
+
 
   await app.listen(process.env.PORT || 3000);
 }
